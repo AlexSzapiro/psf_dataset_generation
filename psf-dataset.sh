@@ -18,7 +18,7 @@ source activate $ANACONDA_DIR
 set -x
 
 # Change location
-cd /feynman/home/dap/lcs/as274094/work/
+cd /feynman/home/dap/lcs/as274094/work/psf_dataset_generation/
 
 # Run code
 srun gen-SR-PSF-parallel-GT100.py $SLURM_ARRAY_TASK_ID
