@@ -17,7 +17,7 @@ SED_path = '/feynman/home/dap/lcs/as274094/work/wf-psf/data/SEDs/save_SEDs/'
 
 # Output saving path (in node05 of candide or $WORK space on feynman)
 # output_folder = '/feynman/work/dap/lcs/ec270266/output/interp_SEDs/'
-output_folder = '/feynman/home/dap/lcs/as274094/work/psf_dataset_generation/output/psf_dataset1'
+output_folder = '/feynman/home/dap/lcs/as274094/work/psf_dataset_generation/output/psf_dataset1/'
 
 # Reference dataset PATH
 # reference_data = '../interp_SED_data/reference_dataset/'
@@ -27,7 +27,7 @@ ref_test  = 'test_Euclid_res_id_001.npy'
 selected_id_SED_path = 'selected_id_SED.npy'
 
 # Number of cpus to use for parallelization
-n_cpus = 24 #verify that it doesn't reach the N of actual CPUs
+n_cpus = 512 #verify that it doesn't reach the N of actual CPUs
 
 # Save output prints to logfile
 old_stdout = sys.stdout
@@ -279,17 +279,31 @@ print('\nAll stars generated in '+ str(end_time-start_time) +' seconds')
 #            END PARALLEL             #
 #######################################
 
-# Add noise to generated PSFs and save datasets
+# Add noise to generated train star PSFs and save datasets
 
-# SNR varying randomly from 10 to 120 - shared over all WFE resolutions
-rand_SNR = (np.random.rand(tot_train_stars) * 350) + 50
+# SNR varying randomly from 50 to 400 - shared over all WFE resolutions
+rand_SNR_train = (np.random.rand(tot_train_stars) * 350) + 50
 # Copy the training stars
 train_stars = np.copy(np.array(poly_psf_multires[0])[:tot_train_stars, :, :])
 # Add Gaussian noise to the observations
 noisy_train_stars = np.stack([wf_psf.utils.add_noise(_im, desired_SNR=_SNR) 
-                              for _im, _SNR in zip(train_stars, rand_SNR)], axis=0)
+                              for _im, _SNR in zip(train_stars, rand_SNR_train)], axis=0)
 # Generate Gaussian noise patterns to be shared over all datasets (but not every star)
 noisy_train_patterns = noisy_train_stars - train_stars
+
+
+# Add noise to generated test star PSFs and save datasets
+
+# SNR varying randomly from 20 to 400 - shared over all WFE resolutions
+rand_SNR_test = (np.random.rand(n_test_stars) * 380) + 20
+# Copy the test stars
+test_stars = np.copy(np.array(poly_psf_multires[0])[tot_train_stars:, :, :])
+# Add Gaussian noise to the observations
+noisy_test_stars = np.stack([wf_psf.utils.add_noise(_im, desired_SNR=_SNR) 
+                              for _im, _SNR in zip(train_stars, rand_SNR_test)], axis=0)
+# Generate Gaussian noise patterns to be shared over all datasets (but not every star)
+noisy_test_patterns = noisy_test_stars - test_stars
+
 
 WFE_res_id = 0
 
@@ -301,6 +315,7 @@ for poly_psf_np, zernike_coef_np, super_psf_np in zip(poly_psf_multires, zernike
 
     # Add same noise dataset to each WFE-resolution dataset
     noisy_train_stars = np.copy(poly_psf_np[:tot_train_stars, :, :]) + noisy_train_patterns
+    noisy_test_stars = np.copy(poly_psf_np[tot_train_stars:, :, :]) + noisy_test_patterns
 
     # Save only one test dataset
     # Build param dicitionary
@@ -326,13 +341,15 @@ for poly_psf_np, zernike_coef_np, super_psf_np in zip(poly_psf_multires, zernike
 
     test_psf_dataset = {
         'stars' : poly_psf_np[tot_train_stars:, :, :],
+        'noisy_stars': noisy_test_stars,
         'super_res_stars' : super_psf_np[tot_train_stars:, :, :],
         'positions' : pos_np[tot_train_stars:, :],
         'SEDs' : SED_np[tot_train_stars:, :, :],
         'zernike_coef' : zernike_coef_np[tot_train_stars:, :, :],
         'C_poly' : C_poly,
         'parameters': dataset_params,
-        'SED_ids':SED_id_list[tot_train_stars:]
+        'SED_ids':SED_id_list[tot_train_stars:],
+        'SNR': rand_SNR_test
     }
 
     np.save(
@@ -375,7 +392,8 @@ for poly_psf_np, zernike_coef_np, super_psf_np in zip(poly_psf_multires, zernike
             'zernike_coef' : zernike_coef_np[:n_train_stars, :, :],
             'C_poly' : C_poly,
             'parameters': dataset_params,
-            'SED_ids' : SED_id_list[:tot_train_stars]
+            'SED_ids' : SED_id_list[:n_train_stars],
+            'SNR': rand_SNR_train
         }
 
 
