@@ -5,16 +5,16 @@
 #SBATCH --partition=htc
 #SBATCH --nodes=1
 #SBATCH --array=1
-#SBATCH --cpus-per-task=512
-#SBATCH --time=6:00:00
-#SBATCH --mem-per-cpu=10G
+#SBATCH --cpus-per-task=64
+#SBATCH --time=24:00:00
+#SBATCH --mem-per-cpu=4G
 #SBATCH --output=psf_data_gen-%j-%a.log
 
 # Activate conda environment
 module load anaconda
 source activate $ANACONDA_DIR
 
-# echo des commandes lancees
+# echo des commandes lanceespwd
 set -x
 
 # Change location
