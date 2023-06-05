@@ -17,7 +17,7 @@ SED_path = '/feynman/home/dap/lcs/as274094/work/wf-psf/data/SEDs/save_SEDs/'
 
 # Output saving path (in node05 of candide or $WORK space on feynman)
 # output_folder = '/feynman/work/dap/lcs/ec270266/output/interp_SEDs/'
-output_folder = '/feynman/home/dap/lcs/as274094/work/psf_dataset_generation/output/psf_dataset1/'
+output_folder = '/feynman/home/dap/lcs/as274094/work/psf_dataset_generation/output/psf_dataset2/'
 
 # Reference dataset PATH
 # reference_data = '../interp_SED_data/reference_dataset/'
@@ -36,7 +36,7 @@ sys.stdout = log_file
 print('Starting the log file.')
 
 # Dataset ID
-dataset_id = 1
+dataset_id = 2
 dataset_id_str = '%03d'%(dataset_id)
 
 # This list must be in order from bigger to smaller
@@ -300,7 +300,7 @@ rand_SNR_test = (np.random.rand(n_test_stars) * 380) + 20
 test_stars = np.copy(np.array(poly_psf_multires[0])[tot_train_stars:, :, :])
 # Add Gaussian noise to the observations
 noisy_test_stars = np.stack([wf_psf.utils.add_noise(_im, desired_SNR=_SNR) 
-                              for _im, _SNR in zip(train_stars, rand_SNR_test)], axis=0)
+                              for _im, _SNR in zip(test_stars, rand_SNR_test)], axis=0)
 # Generate Gaussian noise patterns to be shared over all datasets (but not every star)
 noisy_test_patterns = noisy_test_stars - test_stars
 

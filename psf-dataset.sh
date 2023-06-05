@@ -6,7 +6,7 @@
 #SBATCH --nodes=1
 #SBATCH --array=1
 #SBATCH --cpus-per-task=64
-#SBATCH --time=24:00:00
+#SBATCH --time=48:00:00
 #SBATCH --mem-per-cpu=4G
 #SBATCH --output=psf_data_gen-%j-%a.log
 
@@ -14,7 +14,7 @@
 module load anaconda
 source activate $ANACONDA_DIR
 
-# echo des commandes lanceespwd
+# echo des commandes lancees
 set -x
 
 # Change location
