@@ -1,7 +1,6 @@
 #! /feynman/work/dap/lcs/as274094/.conda/envs/psf/bin/python
 
 import numpy as np
-import matplotlib.pyplot as plt
 import wf_psf as wf_psf
 from tqdm import tqdm
 from joblib import Parallel, delayed, cpu_count, parallel_backend
@@ -17,7 +16,7 @@ SED_path = '/feynman/home/dap/lcs/as274094/work/wf-psf/data/SEDs/save_SEDs/'
 
 # Output saving path (in node05 of candide or $WORK space on feynman)
 # output_folder = '/feynman/work/dap/lcs/ec270266/output/interp_SEDs/'
-output_folder = '/feynman/home/dap/lcs/as274094/work/psf_dataset_generation/output/psf_dataset2/'
+output_folder = '/feynman/home/dap/lcs/as274094/work/psf_dataset_generation/output/psf_dataset3/'
 
 # Reference dataset PATH
 # reference_data = '../interp_SED_data/reference_dataset/'
@@ -36,12 +35,12 @@ sys.stdout = log_file
 print('Starting the log file.')
 
 # Dataset ID
-dataset_id = 2
+dataset_id = 3
 dataset_id_str = '%03d'%(dataset_id)
 
 # This list must be in order from bigger to smaller
-n_star_list = [52000]
-n_test_stars = 20000 
+n_star_list = [2000, 1000, 500, 400, 300, 250, 200, 150, 100, 50, 20]
+n_test_stars = 400 
 # Total stars
 n_stars = n_star_list[0] + n_test_stars
 # Max train stars
@@ -53,7 +52,7 @@ max_order = 45
 x_lims = [0, 1e3]
 y_lims = [0, 1e3]
 grid_points = [4, 4]
-n_bins = 100
+n_bins = 350
 auto_init = False
 verbose = True
 
@@ -282,7 +281,7 @@ print('\nAll stars generated in '+ str(end_time-start_time) +' seconds')
 # Add noise to generated train star PSFs and save datasets
 
 # SNR varying randomly from 50 to 400 - shared over all WFE resolutions
-rand_SNR_train = (np.random.rand(tot_train_stars) * 350) + 50
+rand_SNR_train = (np.random.rand(tot_train_stars) * 100) + 10
 # Copy the training stars
 train_stars = np.copy(np.array(poly_psf_multires[0])[:tot_train_stars, :, :])
 # Add Gaussian noise to the observations
@@ -291,7 +290,7 @@ noisy_train_stars = np.stack([wf_psf.utils.add_noise(_im, desired_SNR=_SNR)
 # Generate Gaussian noise patterns to be shared over all datasets (but not every star)
 noisy_train_patterns = noisy_train_stars - train_stars
 
-
+'''
 # Add noise to generated test star PSFs and save datasets
 
 # SNR varying randomly from 20 to 400 - shared over all WFE resolutions
@@ -303,7 +302,7 @@ noisy_test_stars = np.stack([wf_psf.utils.add_noise(_im, desired_SNR=_SNR)
                               for _im, _SNR in zip(test_stars, rand_SNR_test)], axis=0)
 # Generate Gaussian noise patterns to be shared over all datasets (but not every star)
 noisy_test_patterns = noisy_test_stars - test_stars
-
+'''
 
 WFE_res_id = 0
 
@@ -315,7 +314,7 @@ for poly_psf_np, zernike_coef_np, super_psf_np in zip(poly_psf_multires, zernike
 
     # Add same noise dataset to each WFE-resolution dataset
     noisy_train_stars = np.copy(poly_psf_np[:tot_train_stars, :, :]) + noisy_train_patterns
-    noisy_test_stars = np.copy(poly_psf_np[tot_train_stars:, :, :]) + noisy_test_patterns
+    #noisy_test_stars = np.copy(poly_psf_np[tot_train_stars:, :, :]) + noisy_test_patterns
 
     # Save only one test dataset
     # Build param dicitionary
@@ -341,7 +340,7 @@ for poly_psf_np, zernike_coef_np, super_psf_np in zip(poly_psf_multires, zernike
 
     test_psf_dataset = {
         'stars' : poly_psf_np[tot_train_stars:, :, :],
-        'noisy_stars': noisy_test_stars,
+        #'noisy_stars': noisy_test_stars,
         'super_res_stars' : super_psf_np[tot_train_stars:, :, :],
         'positions' : pos_np[tot_train_stars:, :],
         'SEDs' : SED_np[tot_train_stars:, :, :],
@@ -349,11 +348,11 @@ for poly_psf_np, zernike_coef_np, super_psf_np in zip(poly_psf_multires, zernike
         'C_poly' : C_poly,
         'parameters': dataset_params,
         'SED_ids':SED_id_list[tot_train_stars:],
-        'SNR': rand_SNR_test
+        #'SNR': rand_SNR_test
     }
 
     np.save(
-        output_folder + 'test_Euclid_res_' + str(n_test_stars) + '_TestStars_id_' + dataset_id_str + 'GT_100_bins.npy',
+        output_folder + 'test_Euclid_' + str(n_test_stars) + '_stars_id_' + dataset_id_str + 'GT_'+ str(n_bins)+'_bins.npy',
         test_psf_dataset,
         allow_pickle=True
     )
@@ -398,7 +397,7 @@ for poly_psf_np, zernike_coef_np, super_psf_np in zip(poly_psf_multires, zernike
 
 
         np.save(
-            output_folder + 'train_Euclid_res_' + str(n_train_stars) + '_TrainStars_id_' + dataset_id_str + 'GT_100_bins.npy',
+            output_folder + 'train_Euclid_' + str(n_train_stars) + '_stars_id_' + dataset_id_str + 'GT_'+ str(n_bins)+'_bins.npy',
             train_psf_dataset,
             allow_pickle=True
         )
